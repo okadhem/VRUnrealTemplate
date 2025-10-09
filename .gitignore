@@ -1,0 +1,29 @@
+# Unreal project essentials
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/*/      # platform builds
+.vs/
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Ignore build outputs
+*.sln
+*.sdf
+*.suo
+*.opensdf
+*.log
+
+# Keep these
+!Source/
+!Config/
+!Content/
+!Plugins/
+!*.uproject
+!*.uplugin
+
