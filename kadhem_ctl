@@ -1,0 +1,71 @@
+#!/usr/bin/env fish
+
+fish_trace on
+# must not contain spaces because it confuses Unreal build tool
+set project_path '/home/kadhem/VRUnrealTemplate/VRUnrealTemplate.uproject'
+
+
+# myFile.fish - simple command dispatcher for Fish shell
+
+# Exit on error
+function safe_exit
+    set -l status $status
+    if test $status -ne 0
+        echo "Error: command failed with status $status" >&2
+    end
+    exit $status
+end
+
+# Trap errors
+function on_error --on-event fish_posterror
+    safe_exit
+end
+
+# -------------------------
+# Define commands as functions
+# -------------------------
+function generate_compile_commands
+    # echo "Running cmd1 with args: $argv"
+    # Example real command:
+    # ls -la $argv[1]
+    ./UnrealEngine/Engine/Build/BatchFiles/Linux/Build.sh -project=$project_path -mode=GenerateClangDatabase VRUnrealTemplateEditor Linux Development;
+    mv ./UnrealEngine/compile_commands.json .
+end
+
+function generate_makefile
+    ./UnrealEngine/Engine/Build/BatchFiles/Linux/GenerateProjectFiles.sh -project=$project_path -makefile
+    mv ./UnrealEngine/Makefile .
+end
+
+# -------------------------
+# Helper / usage
+# -------------------------
+function usage
+echo "inset usage here"
+end
+
+# -------------------------
+# Dispatching logic
+# -------------------------
+if test (count $argv) -lt 1
+    usage
+    exit 1
+end
+
+set cmd $argv[1]
+set args $argv[2..-1]
+
+switch $cmd
+    case help -h --help
+        usage
+    case list
+        functions | grep -E '^cmd' | sort
+    case '*'
+        if functions -q $cmd
+            $cmd $args
+        else
+            echo "Unknown command: $cmd" >&2
+            usage
+            exit 2
+        end
+end
