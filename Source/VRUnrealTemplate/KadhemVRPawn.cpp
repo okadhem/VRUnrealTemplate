@@ -20,15 +20,19 @@ AKadhemVRPawn::AKadhemVRPawn() {
   VRCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("VRCamera"));
   VRCamera->SetupAttachment(VROrigin);
 
-  MotionControllerLeft = CreateDefaultSubobject<UMotionControllerComponent>(
-      TEXT("MotionControllerLeft"));
+  MotionControllerLeft =
+      CreateDefaultSubobject<UKadhemMotionControllerComponent>(
+          TEXT("MotionControllerLeft"));
   MotionControllerLeft->SetupAttachment(VROrigin);
   MotionControllerLeft->SetTrackingSource(EControllerHand::Left);
+  MotionControllerLeft->bDisableLowLatencyUpdate = false;
 
-  MotionControllerRight = CreateDefaultSubobject<UMotionControllerComponent>(
-      TEXT("MotionControllerRight"));
+  MotionControllerRight =
+      CreateDefaultSubobject<UKadhemMotionControllerComponent>(
+          TEXT("MotionControllerRight"));
   MotionControllerRight->SetupAttachment(VROrigin);
   MotionControllerRight->SetTrackingSource(EControllerHand::Right);
+  MotionControllerRight->bDisableLowLatencyUpdate = false;
 
   static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Ref(
       TEXT("/Game/Kadhem/Input/IMC_Player"));
@@ -58,15 +62,29 @@ AKadhemVRPawn::AKadhemVRPawn() {
   }
 }
 
-void AKadhemVRPawn::BeginPlay() {
-  Super::BeginPlay();
-  GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-                                   TEXT("Begin Play AKadhemVRPawn!"));
+void AKadhemVRPawn::BeginPlay() { Super::BeginPlay(); }
 
-  AutoPossessPlayer = EAutoReceiveInput::Player0;
+void AKadhemVRPawn::Tick(float DeltaTime) {
+  Super::Tick(DeltaTime);
+  // notes on how this engine works (i think)
+  // there is on tick happening in the game, actor ticks are ordered by their
+  // TickGroup the main ones: TG_PrePhysics, TG_DuringPhysics, TG_PostPhysics
+  // physics simulation may execute multiple steps internally.
+  //
+  // we can safely modify physics data in TG_PrePhysics, like add forces for our
+  // case. Forces set are just used for one simulation (one game tick), so to
+  // apply a force continiously we must add the force each tick.
+  //
+  // TODO:
+  // where to apply the force, at tip of hand or COM ?
+  // i feel tip of hand, but need to try both
+  //
+  // apply different join types for upper-forarm and forarm-hand
+  //
+  // General Unreal questions:
+  //
+  //
 }
-
-void AKadhemVRPawn::Tick(float DeltaTime) { Super::Tick(DeltaTime); }
 
 void AKadhemVRPawn::SetupPlayerInputComponent(
     UInputComponent *PlayerInputComponent) {

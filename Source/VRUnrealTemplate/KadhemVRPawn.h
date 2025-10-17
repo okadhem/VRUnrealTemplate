@@ -5,6 +5,7 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "MotionControllerComponent.h"
+#include "KadhemMotionControllerComponent.h"
 #include "KadhemVRPawn.generated.h" // always last
 
 UCLASS()
@@ -34,18 +35,18 @@ public:
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
   UInputMappingContext *IMC_Player;
 
+  UPROPERTY(VisibleAnywhere)
+  UKadhemMotionControllerComponent *MotionControllerLeft;
+
+  UPROPERTY(VisibleAnywhere)
+  UKadhemMotionControllerComponent *MotionControllerRight;
+
 private:
   UPROPERTY(VisibleAnywhere)
   USceneComponent *VROrigin;
 
   UPROPERTY(VisibleAnywhere)
   UCameraComponent *VRCamera;
-
-  UPROPERTY(VisibleAnywhere)
-  UMotionControllerComponent *MotionControllerLeft;
-
-  UPROPERTY(VisibleAnywhere)
-  UMotionControllerComponent *MotionControllerRight;
 
   // Movement
   UPROPERTY(EditAnywhere, Category = "VR Movement")

@@ -1,6 +1,5 @@
 #!/usr/bin/env fish
 
-fish_trace on
 # must not contain spaces because it confuses Unreal build tool
 set project_path '/home/kadhem/VRUnrealTemplate/VRUnrealTemplate.uproject'
 
@@ -28,13 +27,35 @@ function generate_compile_commands
     # echo "Running cmd1 with args: $argv"
     # Example real command:
     # ls -la $argv[1]
-    ./UnrealEngine/Engine/Build/BatchFiles/Linux/Build.sh -project=$project_path -mode=GenerateClangDatabase VRUnrealTemplateEditor Linux Development;
+    #./UnrealEngine/Engine/Build/BatchFiles/Linux/Build.sh -project=$project_path -mode=GenerateClangDatabase VRUnrealTemplateEditor Linux Development;
+    ./UnrealEngine/Engine/Build/BatchFiles/Linux/Build.sh -project=$project_path -mode=GenerateClangDatabase VRUnrealTemplate Android Development;
     mv ./UnrealEngine/compile_commands.json .
 end
 
 function generate_makefile
-    ./UnrealEngine/Engine/Build/BatchFiles/Linux/GenerateProjectFiles.sh -project=$project_path -makefile
+    ./UnrealEngine/Engine/Build/BatchFiles/Linux/GenerateProjectFiles.sh -project=$project_path -makefile;
     mv ./UnrealEngine/Makefile .
+end
+
+
+# Run the incremental cook, package and install the apk.
+# Does not build the project.
+# Did not include -run or -deploy because it results in an app that fails at startup, UAT is doing
+# something different then the install script.
+function cook_install
+    ./UnrealEngine/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=$project_path -platform=Android -cook -iterate -stage -package;
+    ./Binaries/Android/Install_VRUnrealTemplate-arm64.sh
+end
+
+# Runs build and install apk
+function build_install
+    ./UnrealEngine/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=$project_path -platform=Android -build -target=VRUnrealTemplate -nocompileeditor;
+    ./Binaries/Android/Install_VRUnrealTemplate-arm64.sh
+end
+
+function full_build_cook
+    ./UnrealEngine/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=$project_path -platform=Android -build -cook -iterate -stage -package -target=VRUnrealTemplate -nocompileeditor
+    ./Binaries/Android/Install_VRUnrealTemplate-arm64.sh
 end
 
 # -------------------------
