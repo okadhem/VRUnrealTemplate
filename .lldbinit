@@ -1,0 +1,11 @@
+platform select remote-android
+platform connect connect://localhost:5038
+process connect connect://localhost:5039
+
+# when attaching debugger there is are a bunch of SIGSEGV happening periodically
+# reason is not clear, se we don't stop debugger on them
+#process handle SIGSEGV --pass true --stop false --notify false
+
+#target symbols add '/home/kadhem/Documents/Unreal Projects/VRUnrealTemplate/Binaries/Android/VRUnrealTemplate-arm64.so'
+#
+command source ./lldb_attach_generated
