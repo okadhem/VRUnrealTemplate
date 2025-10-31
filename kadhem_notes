@@ -1,0 +1,12 @@
+Robot hand motion control
+When controlling the robot hand we have the following options: 
+we can make the robot hand track kinematic state of player hand, track position, velocity or acceleration
+all of this choices are bad, they suffer from the same issue, robot hand can interact with game world
+objects which will constraint position, change velocity and acceleration, these changes are not reflected
+in player hand motion, so both motions are now out of sync.
+Second option is to make player input a force applied to the robot hand, the same as any other force
+(reactions from game world collisions etc ...), this way we do not have a problem of kinematic state
+being out of sync.
+since we want to apply a force we need to get a vector from player hand controller, we pick the natural
+choice of controller linear velocity.
+

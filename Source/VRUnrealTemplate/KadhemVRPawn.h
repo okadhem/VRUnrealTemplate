@@ -36,17 +36,20 @@ public:
   UInputMappingContext *IMC_Player;
 
   UPROPERTY(VisibleAnywhere)
+  UKadhemMotionControllerComponent *MotionControllerHead;
+
+  UPROPERTY(VisibleAnywhere)
   UKadhemMotionControllerComponent *MotionControllerLeft;
 
   UPROPERTY(VisibleAnywhere)
   UKadhemMotionControllerComponent *MotionControllerRight;
 
+  UPROPERTY(VisibleAnywhere)
+  UCameraComponent *VRCamera;
+
 private:
   UPROPERTY(VisibleAnywhere)
   USceneComponent *VROrigin;
-
-  UPROPERTY(VisibleAnywhere)
-  UCameraComponent *VRCamera;
 
   // Movement
   UPROPERTY(EditAnywhere, Category = "VR Movement")

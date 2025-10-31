@@ -8,6 +8,8 @@
 #include "InputActionValue.h"        // For FInputActionValue
 #include "EnhancedInputLibrary.h"
 #include "EnhancedPlayerInput.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Engine/LocalPlayer.h"
 
 AKadhemVRPawn::AKadhemVRPawn() {
   PrimaryActorTick.bCanEverTick = true;
@@ -19,6 +21,13 @@ AKadhemVRPawn::AKadhemVRPawn() {
 
   VRCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("VRCamera"));
   VRCamera->SetupAttachment(VROrigin);
+
+  MotionControllerHead =
+      CreateDefaultSubobject<UKadhemMotionControllerComponent>(
+          TEXT("MotionControllerHead"));
+  MotionControllerHead->SetupAttachment(VROrigin);
+  MotionControllerHead->SetTrackingSource(EControllerHand::HMD);
+  MotionControllerHead->bDisableLowLatencyUpdate = false;
 
   MotionControllerLeft =
       CreateDefaultSubobject<UKadhemMotionControllerComponent>(
