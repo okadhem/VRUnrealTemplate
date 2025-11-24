@@ -4,6 +4,13 @@
 #include "GameFramework/Actor.h"
 #include "Robot.generated.h"
 
+struct FMomentumData {
+  FVector LinearMomentum;     // kg·cm/s
+  FVector LinearMomentum_SI;  // kg·m/s
+  FVector AngularMomentum;    // kg·cm²/s
+  FVector AngularMomentum_SI; // kg·m²/s
+};
+
 UCLASS()
 class VRUNREALTEMPLATE_API ARobot : public AActor {
   GENERATED_BODY()
@@ -43,4 +50,10 @@ public:
 
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Robot|Joints")
   class UPhysicsConstraintComponent *ForearmToHandJoint;
+
+private:
+  static FMomentumData GetLinearAndAngularMomentum(UStaticMeshComponent *Mesh);
+
+  bool PreviousTickHandMotionEnabled = false;
+  float MaxHandSpeed = 0.0;
 };

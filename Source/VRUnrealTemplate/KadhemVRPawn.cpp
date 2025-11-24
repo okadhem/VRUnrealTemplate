@@ -69,6 +69,15 @@ AKadhemVRPawn::AKadhemVRPawn() {
   } else {
     UE_LOG(LogTemp, Error, TEXT("Failed to find IM2_Ref!"));
   }
+
+  static ConstructorHelpers::FObjectFinder<UInputAction> IM3_Ref(
+      TEXT("/Game/Kadhem/Input/IA_EnableHandMotion"));
+  if (IM3_Ref.Succeeded()) {
+    IA_EnableHandMotion = IM3_Ref.Object;
+    UE_LOG(LogTemp, Warning, TEXT("found IM3_Ref!"));
+  } else {
+    UE_LOG(LogTemp, Error, TEXT("Failed to find IM3_Ref!"));
+  }
 }
 
 void AKadhemVRPawn::BeginPlay() { Super::BeginPlay(); }
@@ -104,6 +113,7 @@ void AKadhemVRPawn::SetupPlayerInputComponent(
       if (UEnhancedInputLocalPlayerSubsystem *Subsystem =
               LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
         Subsystem->AddMappingContext(IMC_Player, 0);
+        EnhancedInputLocalPlayerSubsystem = Subsystem;
       }
     }
   }
@@ -147,4 +157,13 @@ void AKadhemVRPawn::MoveRight(const FInputActionInstance &Instance) {
 
   RootComponent->AddWorldOffset(Right * AxisValue * MoveSpeed *
                                 GetWorld()->GetDeltaSeconds());
+}
+
+FInputActionValue AKadhemVRPawn::GetEnableHandMotionValue() {
+
+  FInputActionValue Value =
+      EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
+          IA_EnableHandMotion);
+
+  return Value;
 }

@@ -1,4 +1,5 @@
-Robot hand motion control
+# Robot hand motion control
+
 When controlling the robot hand we have the following options: 
 we can make the robot hand track kinematic state of player hand, track position, velocity or acceleration
 all of this choices are bad, they suffer from the same issue, robot hand can interact with game world
@@ -8,5 +9,73 @@ Second option is to make player input a force applied to the robot hand, the sam
 (reactions from game world collisions etc ...), this way we do not have a problem of kinematic state
 being out of sync.
 since we want to apply a force we need to get a vector from player hand controller, we pick the natural
-choice of controller linear velocity.
+choice of controller linear velocity. (velocity in what exact frame of reference is disscussed
+in (Note: Robot motion controller mapping)
 
+# Unreal Physics engine stuff:
+
+## Collision meshes
+unreal engine by default will create a collision manifold based on object mesh, we should not rely on that,
+we can add simlple convex shapes to act as our object collision mesh (toolbar menu of mesh editor)
+also, only a few contact points will be used per such mesh, so adding more simple convex shapes to our
+mesh collision geometry means we get hopefully correct contact points (can be debugged in Chaos debugger view
+show top menu > collision)
+we can add convex simple collision meshes from external modeling tool an import them as UCX_<mesh_name>
+
+## Inertial conditioning
+Inertial conditioning adjusts inertial tensors in non-physical ways for more solver stability (per chatgpt)
+it our tested in resulted in very noticiable violation of (linear) momentum conservation and
+runaway spinning even when force was applied just for a breif time
+
+
+Trying to understand Chaos interals:
+
+PBDRigidsSolver : big entry point for physics scene (rigid body related)
+PBDRigidsEvolutionGBF: calls IslandGroupManager.Solve
+IslandGroupManager.cpp: Solve implementation, calls solve for each IslandGroup
+IslandGroup: a set of constraints to be solved sequentially, subclass of FPBDConstraintGroupSolver
+these thing does not solve the constraint, it has bunch of containers for things and tracks what
+solvers to use.
+There is a FConstraintContainerSolver (SolverConstraintContainer.h), (general type) per constraint type, per island
+TPBDJointContainerSolver (PBDJointContainerSolver.h) is the subclass for joints.
+it holds a FPBDJointConstraints which is the Constraint container
+it holds an array of JointSolverType (template name, actual type can be FPBDJointSolver)
+All the AddConstaint(s) talks about particules, but particules are general term for things used in
+the physics engine.
+
+FPBDJointSolver (PBDJointSolverGaussSeidel.h):
+holds two solver bodies (array of two FConstraintSolverBody)
+contains the actual constraint solver code (it uses ComputeJointFactorMatrix (Utilities.h) or an ispc version)
+
+FSolverBody (SolverBody.h):
+struct that contains particule state, used only by solvers during constraint solve, to read state and
+accumulate results, there is gather/scatter mechanism to read/write this data from its original SOA form
+FConstraintSolverBody: FSolverBody reference + mass information
+
+current hypthesis: there is one container, TPBDJointContainerSolver, (per thread ? per island ?) for all joints
+there is a FPBDJointSolver for each joint in the container.
+
+FPBDJointSettings (PBDJointConstraintTypes.h): contains the joint defining data, degrees of freedom, limits etc ...
+
+What is a Connector ? 
+- look at Init and InitDerived inside the solver
+according to Chatgpt: 
+So a joint frame is simply a local-space transform on each body that defines the position and rotation 
+of the constraint relative to that body’s center of mass or component space.
+
+Who holds the JointContainerSolver ?
+Objects constructed with MakeUnique CreateSceneSolver and CreateGroupSolver
+CreateSceneSolver called by AddConstraintContainer() (PBDMinEvolution.cpp)
+CreateGroupSolver called by AddConstraintContainer() (IslandGroupManager.cpp)
+
+AddConstraintContainer called by FPBDRigidsEvolutionGBF constructor (PBDRigidsEvolutionGBF.cpp)
+AddConstraintContainer called by AddConstraintContainer (PBDRigidsEvolution.h) => not called by anyone i think,
+    its a base class method
+
+
+# laundy list of things for robot editor configs / asset:
+simple convex collision meshes for each limb/piece of the robot
+disable inertrial conditioning for solids and joints
+joints orientation matters, the initial pose of the robot is a T-pose, we palm hand facing down.
+we adjusted rotation offset in joints to move the zero rotation axis (this is needed if rotation limit
+is not symetrical, like 0 -> 150 degrees rather than say -10 -> +10)

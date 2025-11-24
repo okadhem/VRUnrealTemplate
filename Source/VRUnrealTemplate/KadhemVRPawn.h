@@ -6,6 +6,7 @@
 #include "InputMappingContext.h"
 #include "MotionControllerComponent.h"
 #include "KadhemMotionControllerComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "KadhemVRPawn.generated.h" // always last
 
 UCLASS()
@@ -26,11 +27,16 @@ protected:
 public:
   virtual void Tick(float DeltaTime) override;
 
+  FInputActionValue GetEnableHandMotionValue();
+
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
   UInputAction *IA_MoveForward;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
   UInputAction *IA_MoveRight;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+  UInputAction *IA_EnableHandMotion;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
   UInputMappingContext *IMC_Player;
@@ -54,4 +60,6 @@ private:
   // Movement
   UPROPERTY(EditAnywhere, Category = "VR Movement")
   float MoveSpeed = 200.f;
+
+  UEnhancedInputLocalPlayerSubsystem *EnhancedInputLocalPlayerSubsystem;
 };
