@@ -71,12 +71,52 @@ AKadhemVRPawn::AKadhemVRPawn() {
   }
 
   static ConstructorHelpers::FObjectFinder<UInputAction> IM3_Ref(
-      TEXT("/Game/Kadhem/Input/IA_EnableHandMotion"));
+      TEXT("/Game/Kadhem/Input/IA_EnableLeftLimbMotion"));
   if (IM3_Ref.Succeeded()) {
-    IA_EnableHandMotion = IM3_Ref.Object;
+    IA_EnableLeftLimbMotion = IM3_Ref.Object;
     UE_LOG(LogTemp, Warning, TEXT("found IM3_Ref!"));
   } else {
     UE_LOG(LogTemp, Error, TEXT("Failed to find IM3_Ref!"));
+  }
+  static ConstructorHelpers::FObjectFinder<UInputAction> IM4_Ref(
+      TEXT("/Game/Kadhem/Input/IA_EnableRightLimbMotion"));
+  if (IM4_Ref.Succeeded()) {
+    IA_EnableRightLimbMotion = IM4_Ref.Object;
+    UE_LOG(LogTemp, Warning, TEXT("found IM4_Ref!"));
+  } else {
+    UE_LOG(LogTemp, Error, TEXT("Failed to find IM4_Ref!"));
+  }
+  static ConstructorHelpers::FObjectFinder<UInputAction> IM5_Ref(
+      TEXT("/Game/Kadhem/Input/IA_SwitchLowerLeftLimb"));
+  if (IM5_Ref.Succeeded()) {
+    IA_SwitchLowerLeftLimb = IM5_Ref.Object;
+    UE_LOG(LogTemp, Warning, TEXT("found IM5_Ref!"));
+  } else {
+    UE_LOG(LogTemp, Error, TEXT("Failed to find IM5_Ref!"));
+  }
+  static ConstructorHelpers::FObjectFinder<UInputAction> IM6_Ref(
+      TEXT("/Game/Kadhem/Input/IA_SwitchLowerRightLimb"));
+  if (IM6_Ref.Succeeded()) {
+    IA_SwitchLowerRightLimb = IM6_Ref.Object;
+    UE_LOG(LogTemp, Warning, TEXT("found IM6_Ref!"));
+  } else {
+    UE_LOG(LogTemp, Error, TEXT("Failed to find IM6_Ref!"));
+  }
+  static ConstructorHelpers::FObjectFinder<UInputAction> IM7_Ref(
+      TEXT("/Game/Kadhem/Input/IA_SwitchUpperLeftLimb"));
+  if (IM7_Ref.Succeeded()) {
+    IA_SwitchUpperLeftLimb = IM7_Ref.Object;
+    UE_LOG(LogTemp, Warning, TEXT("found IM7_Ref!"));
+  } else {
+    UE_LOG(LogTemp, Error, TEXT("Failed to find IM7_Ref!"));
+  }
+  static ConstructorHelpers::FObjectFinder<UInputAction> IM8_Ref(
+      TEXT("/Game/Kadhem/Input/IA_SwitchUpperRightLimb"));
+  if (IM8_Ref.Succeeded()) {
+    IA_SwitchUpperRightLimb = IM8_Ref.Object;
+    UE_LOG(LogTemp, Warning, TEXT("found IM8_Ref!"));
+  } else {
+    UE_LOG(LogTemp, Error, TEXT("Failed to find IM8_Ref!"));
   }
 }
 
@@ -159,11 +199,49 @@ void AKadhemVRPawn::MoveRight(const FInputActionInstance &Instance) {
                                 GetWorld()->GetDeltaSeconds());
 }
 
-FInputActionValue AKadhemVRPawn::GetEnableHandMotionValue() {
+FInputActionValue AKadhemVRPawn::GetEnableRightLimbMotion() {
 
   FInputActionValue Value =
       EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
-          IA_EnableHandMotion);
+          IA_EnableRightLimbMotion);
 
   return Value;
+}
+
+FInputActionValue AKadhemVRPawn::GetEnableLeftLimbMotion() {
+
+  FInputActionValue Value =
+      EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
+          IA_EnableLeftLimbMotion);
+
+  return Value;
+}
+
+PlayerInput AKadhemVRPawn::GetPlayerInput() {
+  PlayerInput result;
+
+  result.EnableRightLimbMotion =
+      EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
+          IA_EnableRightLimbMotion);
+
+  result.EnableLeftLimbMotion =
+      EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
+          IA_EnableLeftLimbMotion);
+
+  result.SwitchLowerLeftLimb =
+      EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
+          IA_SwitchLowerLeftLimb);
+
+  result.SwitchLowerRightLimb =
+      EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
+          IA_SwitchLowerRightLimb);
+
+  result.SwitchUpperLeftLimb =
+      EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
+          IA_SwitchUpperLeftLimb);
+
+  result.SwitchUpperRightLimb =
+      EnhancedInputLocalPlayerSubsystem->GetPlayerInput()->GetActionValue(
+          IA_SwitchUpperRightLimb);
+  return result;
 }

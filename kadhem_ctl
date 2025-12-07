@@ -57,6 +57,16 @@ function build_install
     and ./Binaries/Android/Install_VRUnrealTemplate-arm64.sh
 end
 
+# Runs build and install apk
+# function build_install
+#     ./UnrealEngine/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=$project_path -platform=Android -build -target=VRUnrealTemplate -development -nocompileeditor
+# end
+
+function editor_build_install
+    ./UnrealEngine/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=$project_path -platform=Android -build -target=VRUnrealTemplate
+    and ./Binaries/Android/Install_VRUnrealTemplate-arm64.sh
+end
+
 function full_build_cook
     ./UnrealEngine/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=$project_path -platform=Android -build -cook -iterate -stage -package -target=VRUnrealTemplate -nocompileeditor
     ./Binaries/Android/Install_VRUnrealTemplate-arm64.sh

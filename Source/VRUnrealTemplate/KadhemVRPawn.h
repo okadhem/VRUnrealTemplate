@@ -3,11 +3,21 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "InputAction.h"
+#include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "MotionControllerComponent.h"
 #include "KadhemMotionControllerComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "KadhemVRPawn.generated.h" // always last
+
+struct PlayerInput {
+  FInputActionValue EnableLeftLimbMotion;
+  FInputActionValue EnableRightLimbMotion;
+  FInputActionValue SwitchUpperLeftLimb;
+  FInputActionValue SwitchUpperRightLimb;
+  FInputActionValue SwitchLowerLeftLimb;
+  FInputActionValue SwitchLowerRightLimb;
+};
 
 UCLASS()
 class VRUNREALTEMPLATE_API AKadhemVRPawn : public APawn {
@@ -27,7 +37,10 @@ protected:
 public:
   virtual void Tick(float DeltaTime) override;
 
-  FInputActionValue GetEnableHandMotionValue();
+  FInputActionValue GetEnableLeftLimbMotion();
+  FInputActionValue GetEnableRightLimbMotion();
+
+  PlayerInput GetPlayerInput();
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
   UInputAction *IA_MoveForward;
@@ -36,7 +49,22 @@ public:
   UInputAction *IA_MoveRight;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-  UInputAction *IA_EnableHandMotion;
+  UInputAction *IA_EnableLeftLimbMotion;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+  UInputAction *IA_EnableRightLimbMotion;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+  UInputAction *IA_SwitchLowerLeftLimb;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+  UInputAction *IA_SwitchLowerRightLimb;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+  UInputAction *IA_SwitchUpperLeftLimb;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+  UInputAction *IA_SwitchUpperRightLimb;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
   UInputMappingContext *IMC_Player;

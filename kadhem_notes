@@ -28,7 +28,7 @@ it our tested in resulted in very noticiable violation of (linear) momentum cons
 runaway spinning even when force was applied just for a breif time
 
 
-Trying to understand Chaos interals:
+## Trying to understand Chaos interals:
 
 PBDRigidsSolver : big entry point for physics scene (rigid body related)
 PBDRigidsEvolutionGBF: calls IslandGroupManager.Solve

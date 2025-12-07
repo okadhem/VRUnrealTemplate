@@ -3,6 +3,7 @@
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/TextureStreamingTypes.h"
+#include "Engine/World.h"
 #include "HAL/Platform.h"
 #include "KadhemVRPawn.h"
 #include "Logging/LogMacros.h"
@@ -49,58 +50,247 @@ void UiMsg(FString &msg, int32 key) {
   GEngine->AddOnScreenDebugMessage(key, 3.0, FColor::Yellow, msg);
 }
 
+void drawVectorDebug(UWorld *world, FVector location, FVector vector) {
+  DrawDebugDirectionalArrow(world, location, location + vector,
+                            20.0f, // arrow size (shaft + head)
+                            FColor::Yellow,
+                            false, // persistent?
+                            -1.0f, // lifetime (-1 = one frame)
+                            0,     // depth priority
+                            1.5f   // line thickness
+  );
+  DrawDebugDirectionalArrow(world, location,
+                            location + (vector.X * FVector::XAxisVector),
+                            20.0f, // arrow size (shaft + head)
+                            FColor::Red,
+                            false, // persistent?
+                            -1.0f, // lifetime (-1 = one frame)
+                            0,     // depth priority
+                            1.5f   // line thickness
+  );
+  DrawDebugDirectionalArrow(world, location,
+                            location + (vector.Y * FVector::YAxisVector),
+                            20.0f, // arrow size (shaft + head)
+                            FColor::Green,
+                            false, // persistent?
+                            -1.0f, // lifetime (-1 = one frame)
+                            0,     // depth priority
+                            1.5f   // line thickness
+  );
+  DrawDebugDirectionalArrow(world, location,
+                            location + (vector.Z * FVector::ZAxisVector),
+                            20.0f, // arrow size (shaft + head)
+                            FColor::Blue,
+                            false, // persistent?
+                            -1.0f, // lifetime (-1 = one frame)
+                            0,     // depth priority
+                            1.5f   // line thickness
+  );
+}
+
 ARobot::ARobot() {
 
   PrimaryActorTick.bCanEverTick = true;
   RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
-  Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
-  Body->SetupAttachment(RootComponent);
+  Torso = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Torso"));
+  Torso->SetupAttachment(RootComponent);
 
-  ArmAttachPoint =
-      CreateDefaultSubobject<USceneComponent>(TEXT("ArmAttachPoint"));
-  ArmAttachPoint->SetupAttachment(Body);
+  Head = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Head"));
+  Head->SetupAttachment(RootComponent);
 
-  UpperArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("UpperArm"));
-  UpperArm->SetupAttachment(RootComponent);
+  LArmAttachPoint =
+      CreateDefaultSubobject<USceneComponent>(TEXT("LArmAttachPoint"));
+  LArmAttachPoint->SetupAttachment(Torso);
 
-  Forearm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Forearm"));
-  Forearm->SetupAttachment(RootComponent);
+  LUpperArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LUpperArm"));
+  LUpperArm->SetupAttachment(RootComponent);
 
-  Hand = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Hand"));
-  Hand->SetupAttachment(RootComponent);
+  LForearm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LForearm"));
+  LForearm->SetupAttachment(RootComponent);
 
-  ControlPoint = CreateDefaultSubobject<USceneComponent>(TEXT("ControlPoint"));
-  ControlPoint->SetupAttachment(Hand);
+  LHand = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LHand"));
+  LHand->SetupAttachment(RootComponent);
 
-  BodyToUpperJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
-      TEXT("BodyUpperJoint"));
-  BodyToUpperJoint->SetupAttachment(Body);
+  LArmControlPoint =
+      CreateDefaultSubobject<USceneComponent>(TEXT("LArmControlPoint"));
+  LArmControlPoint->SetupAttachment(LHand);
 
-  UpperToForearmJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
-      TEXT("UpperForearmJoint"));
-  UpperToForearmJoint->SetupAttachment(UpperArm);
+  RArmAttachPoint =
+      CreateDefaultSubobject<USceneComponent>(TEXT("RArmAttachPoint"));
+  RArmAttachPoint->SetupAttachment(Torso);
 
-  ForearmToHandJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
-      TEXT("ForearmHandJoint"));
-  ForearmToHandJoint->SetupAttachment(Forearm);
+  RUpperArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RUpperArm"));
+  RUpperArm->SetupAttachment(RootComponent);
 
-  Body->SetSimulatePhysics(true);
-  UpperArm->SetSimulatePhysics(true);
-  Forearm->SetSimulatePhysics(true);
-  Hand->SetSimulatePhysics(true);
+  RForearm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RForearm"));
+  RForearm->SetupAttachment(RootComponent);
 
-  BodyToUpperJoint->SetConstrainedComponents(Body, NAME_None, UpperArm,
-                                             NAME_None);
-  UpperToForearmJoint->SetConstrainedComponents(UpperArm, NAME_None, Forearm,
-                                                NAME_None);
-  ForearmToHandJoint->SetConstrainedComponents(Forearm, NAME_None, Hand,
+  RHand = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RHand"));
+  RHand->SetupAttachment(RootComponent);
+
+  RArmControlPoint =
+      CreateDefaultSubobject<USceneComponent>(TEXT("RArmControlPoint"));
+  RArmControlPoint->SetupAttachment(RHand);
+
+  // lower half
+
+  LLegAttachPoint =
+      CreateDefaultSubobject<USceneComponent>(TEXT("LLegAttachPoint"));
+  LLegAttachPoint->SetupAttachment(Torso);
+
+  LThigh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LThigh"));
+  LThigh->SetupAttachment(RootComponent);
+
+  LLowerLeg = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LLowerLeg"));
+  LLowerLeg->SetupAttachment(RootComponent);
+
+  LFoot = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LFoot"));
+  LFoot->SetupAttachment(RootComponent);
+
+  LLegControlPoint =
+      CreateDefaultSubobject<USceneComponent>(TEXT("LLegControlPoint"));
+  LLegControlPoint->SetupAttachment(LFoot);
+
+  RLegAttachPoint =
+      CreateDefaultSubobject<USceneComponent>(TEXT("RLegAttachPoint"));
+  RLegAttachPoint->SetupAttachment(Torso);
+
+  RThigh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RThigh"));
+  RThigh->SetupAttachment(RootComponent);
+
+  RLowerLeg = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RLowerLeg"));
+  RLowerLeg->SetupAttachment(RootComponent);
+
+  RFoot = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RFoot"));
+  RFoot->SetupAttachment(RootComponent);
+
+  RLegControlPoint =
+      CreateDefaultSubobject<USceneComponent>(TEXT("RLegControlPoint"));
+  RLegControlPoint->SetupAttachment(RFoot);
+
+  // joints
+
+  HeadToTorsoJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("HeadToTorsoJoint"));
+  HeadToTorsoJoint->SetupAttachment(Head);
+
+  LTorsoToUpperJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("LTorsoToUpperJoint"));
+  LTorsoToUpperJoint->SetupAttachment(Torso);
+
+  LUpperToForearmJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("LUpperToForearmJoint"));
+  LUpperToForearmJoint->SetupAttachment(LUpperArm);
+
+  LForearmToHandJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("LForearmToHandJoint"));
+  LForearmToHandJoint->SetupAttachment(LForearm);
+
+  RTorsoToUpperJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("RTorsoToUpperJoint"));
+  RTorsoToUpperJoint->SetupAttachment(Torso);
+
+  RUpperToForearmJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("RUpperToForearmJoint"));
+  RUpperToForearmJoint->SetupAttachment(RUpperArm);
+
+  RForearmToHandJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("RForearmToHandJoint"));
+  RForearmToHandJoint->SetupAttachment(RForearm);
+
+  // lower joints
+
+  LTorsoToThighJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("LTorsoToThighJoint"));
+  LTorsoToThighJoint->SetupAttachment(Torso);
+
+  LThighToLowerLegJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("LThighToLowerLegJoint"));
+  LThighToLowerLegJoint->SetupAttachment(LThigh);
+
+  LLowerLegToFootJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("LLowerLegToFootJoint"));
+  LLowerLegToFootJoint->SetupAttachment(LLowerLeg);
+
+  RTorsoToThighJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("RTorsoToThighJoint"));
+  RTorsoToThighJoint->SetupAttachment(Torso);
+
+  RThighToLowerLegJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("RThighToLowerLegJoint"));
+  RThighToLowerLegJoint->SetupAttachment(RThigh);
+
+  RLowerLegToFootJoint = CreateDefaultSubobject<UPhysicsConstraintComponent>(
+      TEXT("RLowerLegToFootJoint"));
+  RLowerLegToFootJoint->SetupAttachment(RLowerLeg);
+
+  Head->SetSimulatePhysics(true);
+  Torso->SetSimulatePhysics(true);
+  LUpperArm->SetSimulatePhysics(true);
+  LForearm->SetSimulatePhysics(true);
+  LHand->SetSimulatePhysics(true);
+  LThigh->SetSimulatePhysics(true);
+  LLowerLeg->SetSimulatePhysics(true);
+  LFoot->SetSimulatePhysics(true);
+  RUpperArm->SetSimulatePhysics(true);
+  RForearm->SetSimulatePhysics(true);
+  RHand->SetSimulatePhysics(true);
+  RThigh->SetSimulatePhysics(true);
+  RLowerLeg->SetSimulatePhysics(true);
+  RFoot->SetSimulatePhysics(true);
+
+  HeadToTorsoJoint->SetConstrainedComponents(Head, NAME_None, Torso, NAME_None);
+
+  LTorsoToUpperJoint->SetConstrainedComponents(Torso, NAME_None, LUpperArm,
                                                NAME_None);
+  LUpperToForearmJoint->SetConstrainedComponents(LUpperArm, NAME_None, LForearm,
+                                                 NAME_None);
+  LForearmToHandJoint->SetConstrainedComponents(LForearm, NAME_None, LHand,
+                                                NAME_None);
+  LTorsoToThighJoint->SetConstrainedComponents(Torso, NAME_None, LThigh,
+                                               NAME_None);
+  LThighToLowerLegJoint->SetConstrainedComponents(LThigh, NAME_None, LLowerLeg,
+                                                  NAME_None);
+  LLowerLegToFootJoint->SetConstrainedComponents(LLowerLeg, NAME_None, LFoot,
+                                                 NAME_None);
+  RTorsoToUpperJoint->SetConstrainedComponents(Torso, NAME_None, RUpperArm,
+                                               NAME_None);
+  RUpperToForearmJoint->SetConstrainedComponents(RUpperArm, NAME_None, RForearm,
+                                                 NAME_None);
+  RForearmToHandJoint->SetConstrainedComponents(RForearm, NAME_None, RHand,
+                                                NAME_None);
+  RTorsoToThighJoint->SetConstrainedComponents(Torso, NAME_None, RThigh,
+                                               NAME_None);
+  RThighToLowerLegJoint->SetConstrainedComponents(RThigh, NAME_None, RLowerLeg,
+                                                  NAME_None);
+  RLowerLegToFootJoint->SetConstrainedComponents(RLowerLeg, NAME_None, RFoot,
+                                                 NAME_None);
+
+  UPhysicsConstraintComponent *joints[13] = {
+      HeadToTorsoJoint,     LTorsoToThighJoint,    LTorsoToUpperJoint,
+      LLowerLegToFootJoint, LThighToLowerLegJoint, LUpperToForearmJoint,
+      LForearmToHandJoint,  RTorsoToThighJoint,    RTorsoToUpperJoint,
+      RLowerLegToFootJoint, RThighToLowerLegJoint, RUpperToForearmJoint,
+      RForearmToHandJoint};
+
+  for (int i = 0; i < 13; i++) {
+
+    UE_LOG(LogTemp, Warning, TEXT("Running joint init from c++"));
+
+    joints[i]->SetDisableCollision(true);
+    joints[i]->ConstraintInstance.DisableMassConditioning();
+    joints[i]->SetAngularDriveMode(EAngularDriveMode::TwistAndSwing);
+    joints[i]->SetAngularVelocityDriveTwistAndSwing(true, true);
+    joints[i]->SetAngularDriveParams(0.0,   // stiffness
+                                     600.0, // damping
+                                     100000);
+  }
 }
 
 void ARobot::BeginPlay() {
   Super::BeginPlay();
-  if (ArmAttachPoint != nullptr) {
+  if (LArmAttachPoint != nullptr) {
     UE_LOG(LogTemp, Warning, TEXT("Found ArmAttachPoint"));
   } else {
     UE_LOG(LogTemp, Error, TEXT("Failed to find ArmAttachPoint"));
@@ -113,6 +303,7 @@ void ARobot::Tick(float DeltaTime) {
   {
     // conservation of momentum debugging
 
+    /*
     auto BodyMomentum = GetLinearAndAngularMomentum(Body);
     auto HandMomentum = GetLinearAndAngularMomentum(Hand);
     auto ForearmMomentum = GetLinearAndAngularMomentum(Forearm);
@@ -128,27 +319,33 @@ void ARobot::Tick(float DeltaTime) {
                                 TotalLinearMomentum.X, TotalLinearMomentum.Y,
                                 TotalLinearMomentum.Z);
     auto msg2 = FString::Printf(TEXT("TotalAngularMomentum (%f,%f,%f)"),
-                                TotalAngularMomentum.X, TotalAngularMomentum.Y,
-                                TotalAngularMomentum.Z);
+                                TotalAngularMomentum.X,
+    TotalAngularMomentum.Y, TotalAngularMomentum.Z);
     // UiMsg(msg1, 2);
     // UiMsg(msg2, 3);
+    */
   }
 
+  UStaticMeshComponent *BodyParts[14] = {
+      Head,  Torso,     LUpperArm, LForearm, LHand,  LThigh,    LLowerLeg,
+      LFoot, RUpperArm, RForearm,  RHand,    RThigh, RLowerLeg, RFoot};
   {
     // drawing the COM
-    auto totalMass = Body->GetMass() + Hand->GetMass() + Forearm->GetMass() +
-                     UpperArm->GetMass();
-    auto COM = 1 / totalMass *
-               (Body->GetMass() * Body->GetCenterOfMass() +
-                Hand->GetMass() * Hand->GetCenterOfMass() +
-                Forearm->GetMass() * Forearm->GetCenterOfMass() +
-                UpperArm->GetMass() * UpperArm->GetCenterOfMass());
 
-    auto msg = FString::Printf(TEXT("COM (%f,%f,%f)"), COM.X, COM.Y, COM.Z);
+    auto totalMass = 0;
+    auto acc = FVector::Zero();
+    for (int i = 0; i < 14; i++) {
+      totalMass += BodyParts[i]->GetMass();
+      acc += BodyParts[i]->GetMass() * BodyParts[i]->GetCenterOfMass();
+    }
+    auto centerOfMass = (1.0 / totalMass) * acc;
+
+    auto msg = FString::Printf(TEXT("centerOfMass (%f,%f,%f)"), centerOfMass.X,
+                               centerOfMass.Y, centerOfMass.Z);
 
     UiMsg(msg, 8);
 
-    DrawDebugSphere(GetWorld(), COM,
+    DrawDebugSphere(GetWorld(), centerOfMass,
                     5.0f, // radius
                     12,   // segments
                     FColor::Purple,
@@ -161,117 +358,185 @@ void ARobot::Tick(float DeltaTime) {
 
   AKadhemVRPawn *PlayerPawn = Cast<AKadhemVRPawn>(PC->GetPawn());
 
-  const auto HandMotionEnabled =
-      PlayerPawn->GetEnableHandMotionValue().Get<bool>();
+  const auto playerInput = PlayerPawn->GetPlayerInput();
 
+  auto LeftLimbMotionTurnedOn = playerInput.EnableLeftLimbMotion.Get<bool>() &&
+                                !PreviousTickEnableLeftLimbMotion;
+
+  auto RightLimbMotionTurnedOn =
+      playerInput.EnableRightLimbMotion.Get<bool>() &&
+      !PreviousTickEnableRightLimbMotion;
+
+  auto LeftLimbMotionTurnedOff =
+      !playerInput.EnableLeftLimbMotion.Get<bool>() &&
+      PreviousTickEnableLeftLimbMotion;
+
+  auto RightLimbMotionTurnedOff =
+      !playerInput.EnableRightLimbMotion.Get<bool>() &&
+      PreviousTickEnableRightLimbMotion;
   {
     // motion max speed
-    auto HandSpeed = Hand->GetPhysicsLinearVelocity().Length();
-    if (HandMotionEnabled && !PreviousTickHandMotionEnabled) {
-      MaxHandSpeed = 0.0;
-    }
-    if (HandMotionEnabled && HandSpeed > MaxHandSpeed) {
-      MaxHandSpeed = HandSpeed;
 
-      auto msg = FString::Printf(TEXT("HandMaxSpeed %f"), MaxHandSpeed);
-      UiMsg(msg, 9);
+    if (LeftLimbMotionTurnedOn) {
+      MaxLeftHandSpeed = 0.0;
+      MaxLeftFootSpeed = 0.0;
+    }
+    auto LHandSpeed = LHand->GetPhysicsLinearVelocity().Length();
+    if (playerInput.EnableLeftLimbMotion.Get<bool>() &&
+        LHandSpeed > MaxLeftHandSpeed) {
+      MaxLeftHandSpeed = LHandSpeed;
+    }
+    auto handMsg =
+        FString::Printf(TEXT("LeftHandMaxSpeed %f"), MaxLeftHandSpeed);
+    UiMsg(handMsg, 9);
+
+    auto LFootSpeed = LFoot->GetPhysicsLinearVelocity().Length();
+    if (playerInput.EnableLeftLimbMotion.Get<bool>() &&
+        LFootSpeed > MaxLeftFootSpeed) {
+      MaxLeftFootSpeed = LFootSpeed;
+    }
+    auto footMsg =
+        FString::Printf(TEXT("LeftFootMaxSpeed %f"), MaxLeftFootSpeed);
+    UiMsg(footMsg, 9);
+  }
+
+  FVector HMDLinearVelocityWorld;
+  {
+    IOpenXRHMD *OpenXRHMD =
+        static_cast<IOpenXRHMD *>(GEngine->XRSystem->GetIOpenXRHMD());
+
+    FQuat HMDOrientation;
+    FVector HMDPosition;
+    FRotator HMDAngularVelocity;
+    FVector AngularVelocityAsAxisAndLength;
+    FVector HMDLinearAcceleration;
+    bool bTimeWasUsed;
+    bool bProvidedLinearVelocity;
+    bool bProvidedAngularVelocity;
+    bool bProvidedLinearAcceleration;
+    bool result = OpenXRHMD->GetPoseForTime(
+        IXRTrackingSystem::HMDDeviceId, OpenXRHMD->GetDisplayTime(),
+        bTimeWasUsed, HMDOrientation, HMDPosition, bProvidedLinearVelocity,
+        HMDLinearVelocityWorld, bProvidedAngularVelocity,
+        AngularVelocityAsAxisAndLength, bProvidedLinearAcceleration,
+        HMDLinearAcceleration, GetWorld()->GetWorldSettings()->WorldToMeters);
+  }
+
+  FMatrix ViewMatrix;
+  {
+    FVector ViewLocation;
+    FRotator ViewRotation;
+    PC->GetPlayerViewPoint(ViewLocation, ViewRotation);
+
+    // we are doing the mapping from input controller to the final vector we
+    // will use to controll the robot. see note: Robot motion controller mapping
+
+    // up is Z axis
+    ViewRotation.Pitch = 0.0;
+    ViewRotation.Roll = 0.0;
+    const FMatrix CameraTransform =
+        FRotationTranslationMatrix(ViewRotation, ViewLocation);
+    // ViewMatrix is the 'World -> Camera' transform
+    ViewMatrix = CameraTransform.InverseFast();
+  }
+
+  if (playerInput.SwitchLowerLeftLimb.Get<bool>()) {
+    LeftSelectedLimb = LowerUpper::Lower;
+  }
+  if (playerInput.SwitchUpperLeftLimb.Get<bool>()) {
+    LeftSelectedLimb = LowerUpper::Upper;
+  }
+  if (playerInput.SwitchLowerRightLimb.Get<bool>()) {
+    RightSelectedLimb = LowerUpper::Lower;
+  }
+  if (playerInput.SwitchUpperRightLimb.Get<bool>()) {
+    RightSelectedLimb = LowerUpper::Upper;
+  }
+  {
+    if (LeftLimbMotionTurnedOn && LeftSelectedLimb == LowerUpper::Upper) {
+      LTorsoToUpperJoint->SetAngularOrientationDrive(false, false);
+      LUpperToForearmJoint->SetAngularOrientationDrive(false, false);
+      LForearmToHandJoint->SetAngularOrientationDrive(false, false);
+    }
+    if (LeftLimbMotionTurnedOn && LeftSelectedLimb == LowerUpper::Lower) {
+      LTorsoToThighJoint->SetAngularOrientationDrive(false, false);
+      LThighToLowerLegJoint->SetAngularOrientationDrive(false, false);
+      LLowerLegToFootJoint->SetAngularOrientationDrive(false, false);
+    }
+    if (RightLimbMotionTurnedOn && RightSelectedLimb == LowerUpper::Upper) {
+      RTorsoToUpperJoint->SetAngularOrientationDrive(false, false);
+      RUpperToForearmJoint->SetAngularOrientationDrive(false, false);
+      RForearmToHandJoint->SetAngularOrientationDrive(false, false);
+    }
+    if (RightLimbMotionTurnedOn && RightSelectedLimb == LowerUpper::Lower) {
+      RTorsoToThighJoint->SetAngularOrientationDrive(false, false);
+      RThighToLowerLegJoint->SetAngularOrientationDrive(false, false);
+      RLowerLegToFootJoint->SetAngularOrientationDrive(false, false);
     }
   }
 
-  IOpenXRHMD *OpenXRHMD =
-      static_cast<IOpenXRHMD *>(GEngine->XRSystem->GetIOpenXRHMD());
+  if (playerInput.EnableLeftLimbMotion.Get<bool>()) {
+    FVector ControllerVelocityWorld;
+    PlayerPawn->MotionControllerLeft->GetLinearVelocity(
+        ControllerVelocityWorld);
 
-  FQuat HMDOrientation;
-  FVector HMDPosition;
-  FVector HMDLinearVelocityWorld;
-  FRotator HMDAngularVelocity;
-  FVector AngularVelocityAsAxisAndLength;
-  FVector HMDLinearAcceleration;
-  bool bTimeWasUsed;
-  bool bProvidedLinearVelocity;
-  bool bProvidedAngularVelocity;
-  bool bProvidedLinearAcceleration;
-  bool result = OpenXRHMD->GetPoseForTime(
-      IXRTrackingSystem::HMDDeviceId, OpenXRHMD->GetDisplayTime(), bTimeWasUsed,
-      HMDOrientation, HMDPosition, bProvidedLinearVelocity,
-      HMDLinearVelocityWorld, bProvidedAngularVelocity,
-      AngularVelocityAsAxisAndLength, bProvidedLinearAcceleration,
-      HMDLinearAcceleration, GetWorld()->GetWorldSettings()->WorldToMeters);
-
-  auto msg = FString::Printf(TEXT("HMDLinearVelocity.Length %f"),
-                             HMDLinearVelocityWorld.Length());
-  UiMsg(msg, 1);
-
-  FVector ControllerVelocityWorld;
-  PlayerPawn->MotionControllerLeft->GetLinearVelocity(ControllerVelocityWorld);
-
-  FVector ViewLocation;
-  FRotator ViewRotation;
-  PC->GetPlayerViewPoint(ViewLocation, ViewRotation);
-
-  // we are doing the mapping from input controller to the final vector we will
-  // use to controll the robot. see note: Robot motion controller mapping
-
-  // up is Z axis
-  ViewRotation.Pitch = 0.0;
-  ViewRotation.Roll = 0.0;
-  const FMatrix CameraTransform =
-      FRotationTranslationMatrix(ViewRotation, ViewLocation);
-  // ViewMatrix is the 'World -> Camera' transform
-  const FMatrix ViewMatrix = CameraTransform.InverseFast();
-
-  FVector FinalInputVectorWorld =
-      GetActorTransform().TransformVector(ViewMatrix.TransformVector(
-          ControllerVelocityWorld - HMDLinearVelocityWorld));
-
-  if (!FinalInputVectorWorld.IsNearlyZero() && HandMotionEnabled) {
+    FVector FinalInputVectorWorld =
+        GetActorTransform().TransformVector(ViewMatrix.TransformVector(
+            ControllerVelocityWorld - HMDLinearVelocityWorld));
 
     const auto Force = 130.0 * FinalInputVectorWorld;
-    Hand->AddForceAtLocation(Force, ControlPoint->GetComponentLocation());
-    Body->AddForceAtLocation(-Force, ArmAttachPoint->GetComponentLocation());
+    if (LeftSelectedLimb == LowerUpper::Upper) {
+      LHand->AddForceAtLocation(Force,
+                                LArmControlPoint->GetComponentLocation());
+      Torso->AddForceAtLocation(-Force,
+                                LArmAttachPoint->GetComponentLocation());
 
-    const FVector Base = ControlPoint->GetComponentLocation();
+      drawVectorDebug(GetWorld(), LArmControlPoint->GetComponentLocation(),
+                      FinalInputVectorWorld);
+    } else {
+      LFoot->AddForceAtLocation(Force,
+                                LLegControlPoint->GetComponentLocation());
+      Torso->AddForceAtLocation(-Force,
+                                LLegAttachPoint->GetComponentLocation());
 
-    DrawDebugDirectionalArrow(GetWorld(), Base, Base + FinalInputVectorWorld,
-                              20.0f, // arrow size (shaft + head)
-                              FColor::Yellow,
-                              false, // persistent?
-                              -1.0f, // lifetime (-1 = one frame)
-                              0,     // depth priority
-                              1.5f   // line thickness
-    );
-    DrawDebugDirectionalArrow(
-        GetWorld(), Base,
-        Base + (FinalInputVectorWorld.X * FVector::XAxisVector),
-        20.0f, // arrow size (shaft + head)
-        FColor::Red,
-        false, // persistent?
-        -1.0f, // lifetime (-1 = one frame)
-        0,     // depth priority
-        1.5f   // line thickness
-    );
-    DrawDebugDirectionalArrow(
-        GetWorld(), Base,
-        Base + (FinalInputVectorWorld.Y * FVector::YAxisVector),
-        20.0f, // arrow size (shaft + head)
-        FColor::Green,
-        false, // persistent?
-        -1.0f, // lifetime (-1 = one frame)
-        0,     // depth priority
-        1.5f   // line thickness
-    );
-    DrawDebugDirectionalArrow(
-        GetWorld(), Base,
-        Base + (FinalInputVectorWorld.Z * FVector::ZAxisVector),
-        20.0f, // arrow size (shaft + head)
-        FColor::Blue,
-        false, // persistent?
-        -1.0f, // lifetime (-1 = one frame)
-        0,     // depth priority
-        1.5f   // line thickness
-    );
+      drawVectorDebug(GetWorld(), LLegControlPoint->GetComponentLocation(),
+                      FinalInputVectorWorld);
+    }
   }
-  PreviousTickHandMotionEnabled = HandMotionEnabled;
+
+  if (playerInput.EnableRightLimbMotion.Get<bool>()) {
+    FVector ControllerVelocityWorld;
+    PlayerPawn->MotionControllerRight->GetLinearVelocity(
+        ControllerVelocityWorld);
+
+    FVector FinalInputVectorWorld =
+        GetActorTransform().TransformVector(ViewMatrix.TransformVector(
+            ControllerVelocityWorld - HMDLinearVelocityWorld));
+
+    const auto Force = 130.0 * FinalInputVectorWorld;
+    if (RightSelectedLimb == LowerUpper::Upper) {
+      RHand->AddForceAtLocation(Force,
+                                RArmControlPoint->GetComponentLocation());
+      Torso->AddForceAtLocation(-Force,
+                                RArmAttachPoint->GetComponentLocation());
+
+      drawVectorDebug(GetWorld(), RArmControlPoint->GetComponentLocation(),
+                      FinalInputVectorWorld);
+    } else {
+      RFoot->AddForceAtLocation(Force,
+                                RLegControlPoint->GetComponentLocation());
+      Torso->AddForceAtLocation(-Force,
+                                RLegAttachPoint->GetComponentLocation());
+
+      drawVectorDebug(GetWorld(), RLegControlPoint->GetComponentLocation(),
+                      FinalInputVectorWorld);
+    }
+  }
+
+  PreviousTickEnableLeftLimbMotion =
+      playerInput.EnableLeftLimbMotion.Get<bool>();
+  PreviousTickEnableRightLimbMotion =
+      playerInput.EnableRightLimbMotion.Get<bool>();
 }
 
 FMomentumData ARobot::GetLinearAndAngularMomentum(UStaticMeshComponent *Mesh) {
